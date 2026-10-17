@@ -1,9 +1,6 @@
-/* Konfigurasi publik (aman ditaruh di GitHub).
-   - Anon key Supabase dan Client Key Midtrans memang dirancang publik.
-   - JANGAN PERNAH menaruh Service Role Key atau Server Key Midtrans di file ini. */
 window.AQ_CONFIG = {
-  SUPABASE_URL: 'https://ISI_PROJECT_REF.supabase.co',
-  SUPABASE_ANON_KEY: 'ISI_ANON_PUBLIC_KEY',
+  SUPABASE_URL: 'https://pivhucidqkoxfsvehqzn.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpdmh1Y2lkcWtveGZzdmVocXpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMzM0MjEsImV4cCI6MjEwNzgwOTQyMX0.S1V9LhCYkBuvcZ6B8z-HmtNbP6bVCw0l31iFIG2PUv4',
   MIDTRANS_CLIENT_KEY: 'ISI_MIDTRANS_CLIENT_KEY',
-  MIDTRANS_ENV: 'sandbox' // ganti ke 'production' saat sudah live
+  MIDTRANS_ENV: 'sandbox'
 };
