@@ -192,7 +192,6 @@ input:focus,select:focus{border-color:var(--ink)}
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-/* Konfigurasi dibaca dari config.js. Selama belum diisi, aplikasi berjalan dalam MODE DEMO (data hanya di perangkat ini). */
 const CFG=window.AQ_CONFIG||{};
 const SUPABASE_URL=CFG.SUPABASE_URL||'',SUPABASE_ANON_KEY=CFG.SUPABASE_ANON_KEY||'';
 const DEMO=!SUPABASE_URL||!SUPABASE_ANON_KEY||SUPABASE_URL.includes('ISI_')||SUPABASE_ANON_KEY.includes('ISI_');
@@ -209,7 +208,6 @@ const fmtDate=d=>new Date(d+'T00:00').toLocaleDateString('id-ID',{weekday:'short
 const normWa=v=>{let n=String(v).replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);else if(n.startsWith('8'))n='62'+n;return n};
 const waOk=n=>/^62\d{8,13}$/.test(n);
 
-/* ===== Mode demo: tiruan Supabase berbasis localStorage ===== */
 function demoClient(){
  const K='aq_demo',uid=()=>'d'+Math.random().toString(36).slice(2,10),iso=()=>new Date().toISOString();
  const seed=()=>{const t=today(),mk=(n,wa,sv,pr,ar,jam,stt)=>{const id=uid(),o='AQ-DEMO'+uid().slice(1,5).toUpperCase();return [{id,order_id:o,customer_name:n,customer_wa:wa,service_name:sv,price:pr,artist_name:ar,booking_date:t,booking_time:jam,status:stt,created_at:iso()},{id:uid(),booking_id:id,order_id:o,gross_amount:pr,status:stt==='Menunggu'?'pending':'settlement',method:stt==='Menunggu'?null:'qris',created_at:iso()}]};
@@ -261,7 +259,6 @@ if(!DEMO&&CFG.MIDTRANS_CLIENT_KEY&&!CFG.MIDTRANS_CLIENT_KEY.includes('ISI_')){
  document.head.appendChild(sn);
 }
 
-
 const P={
  home:'<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>',
  cal:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>',
@@ -288,7 +285,6 @@ const P={
 };
 const ic=(n,c='')=>`<svg class="i ${c}" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 
-/* ===== State ===== */
 const TIMES=['10:00','13:30','16:00'];
 const MENUS=[['dashboard','Beranda','home'],['booking','Booking','cal'],['transaksi','Transaksi','card'],['customer','Pelanggan','users'],['layanan','Layanan','brush'],['staff','Staf','spark'],['stok','Stok bahan','box'],['keuangan','Keuangan','wallet'],['laporan','Laporan','chart']];
 const FILTERS=['Semua','Hari ini','Menunggu','Terkonfirmasi','Selesai','Batal'];
@@ -305,7 +301,6 @@ const rev=()=>pays.filter(p=>['settlement','capture'].includes(p.status)).reduce
 const taken=(a,d,t)=>{const r=artA()[a];return !!r&&(slots[d]||[]).some(x=>x.booking_time===TIMES[t]&&x.artist_name.startsWith(r.n+' ('))};
 const curDate=()=>sel.d&&sel.d>=today()?sel.d:today();
 
-/* ===== UI dasar ===== */
 function toast(msg,bad){const t=$('toast');t.style.background=bad?'#A8123A':'#1F9D72';t.innerHTML=(bad?'':ic('check'))+esc(msg);t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3200)}
 function toggleSheet(on){$('sheet').classList.toggle('on',on);$('scrim').classList.toggle('on',on)}
 function applyTheme(t){document.documentElement.dataset.theme=t;$('themeBtn').innerHTML=ic(t==='dark'?'sun':'moon')}
@@ -320,13 +315,11 @@ function switchView(v){
  if(v==='admin'&&!session){openLogin();return}
  const admin=v==='admin';
  $('adminView').classList.toggle('hidden',!admin);
- $('customerView').classList.toggle('hidden',admin);
- $('dock').classList.toggle('hidden',!admin);
- $('topSub').textContent=admin?'Panel studio':'Booking online';
- $('switchBtn').innerHTML=admin?ic('globe')+'Halaman booking':ic('grid')+'Panel admin';
+ $('customerView').classList.toggle('hidden',admin);$('dock').classList.toggle('hidden',!admin);
+ $('topSub').textContent=admin?'Panel studio':'Booking online';$('switchBtn').innerHTML=admin?ic('globe')+'Halaman booking':ic('grid')+'Panel admin';
  $('switchBtn').onclick=()=>switchView(admin?'customer':'admin');
  window.scrollTo(0,0);
- if(admin)loadAdminMenu('dashboard');else{mode='form';stopPoll();renderCustomer(true)}
+ if(admin)loadAdminMenu('dashboard');else{mode='form';stopPoll();if(cust){ctab='mine';loadMine()}else{renderCustomer(true)}}
 }
 function countUp(el,to,fmt){
  if(matchMedia('(prefers-reduced-motion:reduce)').matches||!to){el.textContent=fmt(to);return}
@@ -336,7 +329,6 @@ function countUp(el,to,fmt){
 const empty=(t,s,btn)=>`<div class="empty"><b>${t}</b>${s}${btn?`<br><button class="btn btn-gloss" onclick="switchView('customer')">${ic('plus')}Buat booking</button>`:''}</div>`;
 const listRows=a=>`<div class="list">${a.join('')}</div>`;
 
-/* ===== Katalog publik ===== */
 const mapSvc=x=>({id:x.id,n:x.name,p:x.price,d:x.duration,active:x.active});
 const mapArt=x=>({id:x.id,n:x.name,r:x.role,active:x.active});
 async function loadCatalog(){
@@ -347,7 +339,6 @@ async function loadCatalog(){
 function retryCat(){catState='load';renderCustomer();loadCatalog().then(()=>renderCustomer())}
 async function loadSlots(d){const {data}=await sb.rpc('taken_slots',{d});const n=data||[];const ch=JSON.stringify(slots[d])!==JSON.stringify(n);slots[d]=n;return ch}
 
-/* ===== Halaman pelanggan ===== */
 function keepFields(){const n=$('pubName'),w=$('pubWa'),d=$('pubDate');if(n)sel.n=n.value;if(w)sel.w=w.value;if(d&&d.value)sel.d=d.value}
 function stopPoll(){clearInterval(poll);poll=null}
 function setTab(t){ctab=t;mode='form';stopPoll();renderCustomer();if(t==='mine'&&cust)loadMine()}
@@ -388,8 +379,7 @@ function pick(k,i){keepFields();if(k!=='x')sel[k]=i;renderCustomer()}
 function validId(){
  keepFields();
  const name=sel.n.trim(),wa=normWa(sel.w);
- $('errName').textContent=name.length<2?'Isi nama lengkap':'';
- $('errWa').textContent=waOk(wa)?'':'Nomor WhatsApp tidak valid. Contoh: 081234567890';
+ $('errName').textContent=name.length<2?'Isi nama lengkap':'';$('errWa').textContent=waOk(wa)?'':'Nomor WhatsApp tidak valid. Contoh: 081234567890';
  if(name.length<2){$('pubName').focus();return null}
  if(!waOk(wa)){$('pubWa').focus();return null}
  cust={name,wa};ls.set('aq_user',cust);return cust;
@@ -418,11 +408,13 @@ function showResult(kind,o){
  mode='result';stopPoll();lastOrder=o;
  const ok=kind==='ok',until=new Date(o.exp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
  const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
+ const waConfirmText=`Halo Admin AQ Nail Art, saya ingin mengonfirmasi pembayaran untuk order: ${o.order_id} (${o.service} - ${rp(o.price)}). Mohon verifikasinya ya kak.`;
+ const waConfirmUrl=`https://wa.me/6281234567890?text=`+encodeURIComponent(waConfirmText);
  $('customerView').innerHTML=`<div class="done view"><div class="ring ${ok?'':'wait'}">${ic(ok?'check':'clock')}</div>
   <h1 style="font-size:26px">${ok?'Booking terkonfirmasi':'Menunggu pembayaran'}</h1>
   <p style="color:var(--muted);margin-top:6px">${ok?`Sampai jumpa di AQ Nail Art, ${esc((cust&&cust.name||'').split(' ')[0])}!`:`Selesaikan pembayaran sebelum ${until}. Jam kamu ditahan sampai saat itu.`}</p>
   <div class="card">${kv('Layanan',esc(o.service))}${kv('Artist',esc(o.artist))}${kv('Jadwal',fmtDate(o.date)+', '+esc(o.time))}${kv('Total',rp(o.price))}${kv('No. order',esc(o.order_id))}</div>
-  ${ok?'':`<button class="btn btn-gloss btn-block" onclick="snapPay(lastOrder)">Lanjutkan bayar</button>`}
+  ${ok?'':`<button class="btn btn-gloss btn-block" onclick="snapPay(lastOrder)">Lanjutkan bayar</button><a class="btn btn-wa btn-block" style="margin-top:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px" href="${waConfirmUrl}" target="_blank" rel="noopener">${ic('whats')}Konfirmasi manual via WhatsApp</a>`}
   <button class="btn ${ok?'btn-gloss':'btn-soft'} btn-block" style="margin-top:10px" onclick="setTab('mine')">Lihat booking saya</button>
   <button class="btn btn-soft btn-block" style="margin-top:10px" onclick="newBooking()">Buat booking lagi</button></div>`;
  window.scrollTo(0,0);
@@ -434,7 +426,6 @@ function showResult(kind,o){
  },5000);
 }
 
-/* ----- Booking saya ----- */
 async function fetchMine(){if(!cust)return[];const {data}=await sb.rpc('my_bookings',{p_wa:cust.wa,p_name:cust.name});return mine=data||[]}
 async function loadMine(){mineState='load';renderCustomer();await fetchMine();mineState='ok';if(ctab==='mine'&&mode==='form')renderCustomer()}
 function lookup(){if(!validId())return;loadMine()}
@@ -448,13 +439,12 @@ function mineHtml(){
  return `<div class="sec" style="margin-top:20px"><h2>Booking ${esc(cust.name.split(' ')[0])}</h2><a onclick="logoutCust()">Bukan kamu?</a></div>`+
   (mineState==='load'?`<div class="skel" style="height:76px"></div><div class="skel" style="height:76px;margin-top:10px"></div>`:mine.length?listRows(mine.map(mineRow)):empty('Belum ada booking','Booking yang kamu buat akan tampil di sini.'));
 }
-setInterval(()=>{ // jam terisi ikut diperbarui tanpa muat ulang
+setInterval(()=>{
  if(mode!=='form'||ctab!=='new'||catState!=='ok'||$('customerView').classList.contains('hidden'))return;
  if(document.activeElement&&document.activeElement.tagName==='INPUT')return;
  loadSlots(curDate()).then(c=>{if(c)renderCustomer()});
 },15000);
 
-/* ===== Panel admin ===== */
 const waLink=b=>{let n=String(b.wa).replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);const t=`Halo ${b.nama}, booking ${b.layanan} bersama ${b.artist.split(' (')[0]} pada ${fmtDate(b.tanggal)} pukul ${b.jam} di AQ Nail Art sudah kami konfirmasi. Sampai jumpa!`;return 'https://wa.me/'+n+'?text='+encodeURIComponent(t)};
 const bookingRow=(b,i,acts)=>{const x=st(b);return `<div class="row wr" style="animation-delay:${Math.min(i,8)*40}ms;${x==='Batal'?'opacity:.6':''}"><div class="ava">${esc(b.nama.charAt(0).toUpperCase())}</div><div class="t"><b>${esc(b.nama)}</b><small>${esc(b.layanan)} · ${esc(b.artist)}<br>${fmtDate(b.tanggal)}, ${esc(b.jam)}</small></div><div style="text-align:right"><div class="price">${rp(b.harga)}</div><span class="badge ${BADGE[x]}">${x}</span></div>${acts?`<div class="acts"><a class="btn btn-wa btn-sm" href="${waLink(b)}" target="_blank" rel="noopener">${ic('whats')}Kirim WA</a>${x==='Terkonfirmasi'||x==='Menunggu'?`<button class="btn btn-soft btn-sm" onclick="setStatus('${b.id}','Selesai')">${ic('check')}Selesai</button><button class="btn btn-soft btn-sm" onclick="setStatus('${b.id}','Batal')">Batalkan</button>`:`<button class="btn btn-soft btn-sm" onclick="setStatus('${b.id}','Terkonfirmasi')">Aktifkan lagi</button>`}</div>`:''}</div>`};
 async function setStatus(id,x){
@@ -466,14 +456,12 @@ async function setStatus(id,x){
 function filtered(){const q=bf.q.trim().toLowerCase();return db.filter(b=>(!q||(b.nama+' '+b.layanan+' '+b.artist+' '+b.wa).toLowerCase().includes(q))&&(bf.f==='Semua'||(bf.f==='Hari ini'?b.tanggal===today():st(b)===bf.f)))}
 function drawBookings(){const l=filtered();$('bkList').innerHTML=l.length?listRows(l.map((b,i)=>bookingRow(b,i,true))):empty('Tidak ada booking',db.length?'Coba ubah pencarian atau filter.':'Booking dari pelanggan akan muncul di sini.')}
 
-/* form tambah / ubah generik */
 function openForm(title,fields,onSave,onDel){
  $('edTitle').textContent=title;
  $('edFields').innerHTML=fields.map(f=>`<div class="field"><label for="ed_${f.k}">${f.l}</label>${f.t==='select'?`<select id="ed_${f.k}">${f.o.map(o=>`<option value="${o[0]}" ${String(o[0])===String(f.v)?'selected':''}>${o[1]}</option>`).join('')}</select>`:`<input id="ed_${f.k}" type="${f.t||'text'}" value="${esc(f.v??'')}" ${f.t==='number'?'inputmode="numeric" min="0"':''}>`}</div>`).join('');
  $('edBtns').innerHTML=(onDel?`<button class="btn btn-soft" id="edDel" aria-label="Hapus">${ic('trash')}</button>`:'')+`<button class="btn btn-soft" onclick="closeForm()">Batal</button><button class="btn btn-gloss" style="flex:1" id="edSave">Simpan</button>`;
  $('edSave').onclick=async()=>{const v={};fields.forEach(f=>v[f.k]=$('ed_'+f.k).value.trim());const err=await onSave(v);if(err){toast(err,true);return}closeForm()};
- if(onDel)$('edDel').onclick=async()=>{if(!confirm('Hapus data ini?'))return;const err=await onDel();if(err){toast(err,true);return}closeForm()};
- $('editModal').classList.add('on');
+ if(onDel)$('edDel').onclick=async()=>{if(!confirm('Hapus data ini?'))return;const err=await onDel();if(err){toast(err,true);return}closeForm()};$('editModal').classList.add('on');
 }
 function closeForm(){$('editModal').classList.remove('on');if(adminReady&&!$('adminView').classList.contains('hidden'))loadAdminMenu(cur,true)}
 async function saveQ(q){const {error}=await q;if(error)return error.code==='23505'?'Nama itu sudah dipakai':'Gagal menyimpan. Coba lagi';await refresh();toast('Tersimpan');return ''}
@@ -537,7 +525,6 @@ function loadAdminMenu(m,keep){
  if(!keep)window.scrollTo(0,0);
 }
 
-/* ===== Login admin & real time ===== */
 function openLogin(){$('loginModal').classList.add('on')}
 function closeLogin(){$('loginModal').classList.remove('on')}
 async function adminLogin(){
